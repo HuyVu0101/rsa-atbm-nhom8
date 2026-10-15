@@ -1,37 +1,44 @@
 """
-ma_hoa.py  --  PHẦN CỦA TV3: mã hoá và giải mã RSA.
+ma_hoa.py -- Mã hoá và giải mã RSA.
 
-Hai hàm lõi ma_hoa_so / giai_ma_so để TV3 điền (mỗi hàm chỉ 1 dòng).
-Phần chia khối văn bản và tệp đã được viết sẵn, chỉ cần đọc hiểu để
-giải thích khi bảo vệ.
+Theo bài giảng Chương 3, mục 3.2:
+  - Mã hoá : C = M^e mod N, với 0 <= M < N   (dùng khoá công khai KU = {e, N})
+  - Giải mã: M = C^d mod N                   (dùng khoá riêng     KR = {d, p, q})
 
-Lưu ý: đây là RSA "sách giáo khoa" (không có padding như OAEP) nên chỉ
-dùng để học tập, không dùng cho hệ thống thật.
+Vì bản rõ M phải nhỏ hơn N, văn bản dài cần được chia khối: văn bản được đổi
+sang dãy byte (mã UTF-8, hỗ trợ tiếng Việt có dấu), chia thành các khối nhỏ,
+mỗi khối đổi thành một số nguyên M < N rồi mã hoá riêng.
+
+Lưu ý: chương trình cài đặt RSA ở dạng cơ bản như trong bài giảng, chưa bổ sung
+kỹ thuật đệm (padding, ví dụ OAEP) mà các hệ thống thực tế sử dụng, vì vậy chỉ
+phục vụ mục đích học tập.
 """
 from so_hoc import luy_thua_modulo
 
 
-# ---------- PHẦN LÕI (TV3 điền) ----------
+# ---------- MÃ HOÁ / GIẢI MÃ MỘT SỐ ----------
 
 def ma_hoa_so(m, n, e):
     """
-    Mã hoá một số nguyên m (0 <= m < n):  c = m^e mod n
-    Gợi ý: dùng luy_thua_modulo.
+    Mã hoá một số nguyên m (0 <= m < n):  C = M^e mod N
+
+    Ví dụ: ma_hoa_so(9, 143, 7)  -> 48
+           ma_hoa_so(88, 187, 7) -> 11   (ví dụ trong bài giảng)
     """
-    # TODO (TV3)
-    raise NotImplementedError("TV3: chưa cài ma_hoa_so")
+    return luy_thua_modulo(m, e, n)
 
 
 def giai_ma_so(c, n, d):
     """
-    Giải mã một số nguyên c:  m = c^d mod n
-    Gợi ý: dùng luy_thua_modulo.
+    Giải mã một số nguyên c:  M = C^d mod N
+
+    Ví dụ: giai_ma_so(48, 143, 103) -> 9
+           giai_ma_so(11, 187, 23)  -> 88   (ví dụ trong bài giảng)
     """
-    # TODO (TV3)
-    raise NotImplementedError("TV3: chưa cài giai_ma_so")
+    return luy_thua_modulo(c, d, n)
 
 
-# ---------- PHẦN VIẾT SẴN (chia khối, chuyển byte <-> số) ----------
+# ---------- CHIA KHỐI VÀ CHUYỂN BYTE <-> SỐ ----------
 
 def _kich_thuoc_khoi(n):
     """Số byte tối đa của một khối plaintext sao cho giá trị khối < n."""
@@ -77,3 +84,12 @@ def ma_hoa_van_ban(van_ban, n, e):
 def giai_ma_van_ban(ban_ma, do_dai_goc, n, d):
     """Giải mã về lại chuỗi văn bản."""
     return giai_ma_bytes(ban_ma, do_dai_goc, n, d).decode("utf-8")
+
+
+if __name__ == "__main__":
+    # Chỉ chạy khi bấm Run trực tiếp file này (khi file khác import thì không chạy)
+    print("=== CHẠY THỬ ma_hoa.py ===")
+    n, e, d = 143, 7, 103
+    c = ma_hoa_so(9, n, e)
+    print("Mã hoá 9  ->", c)
+    print("Giải mã", c, "->", giai_ma_so(c, n, d))
