@@ -13,11 +13,10 @@ from so_hoc import uoc_chung_lon_nhat, nghich_dao_modulo, luy_thua_modulo
 
 def miller_rabin(n, so_vong=20):
     """
-    Kiểm tra n có phải số nguyên tố hay không bằng thuật toán Miller-Rabin
-    (theo bài giảng Chương 3, mục 2.3).
+    Kiểm tra n có phải số nguyên tố hay không bằng thuật toán Miller-Rabin.
 
-    Bài giảng mô tả một lần thử với một số a ngẫu nhiên; ở đây lặp lại
-    so_vong lần với các a khác nhau để giảm xác suất kết luận sai.
+    Mỗi lần thử dùng một số a chọn ngẫu nhiên. Hàm lặp lại so_vong lần với
+    các giá trị a khác nhau để giảm xác suất kết luận sai.
 
     Trả về:
       - False: n chắc chắn là hợp số.
@@ -74,12 +73,12 @@ def sinh_khoa(so_bit=1024, e=65537):
     """
     Tạo cặp khoá RSA với modulo N = p*q dài khoảng `so_bit` bit.
 
-    Trả về dict {"n", "e", "d", "p", "q"}, trong đó (theo bài giảng):
+    Trả về dict {"n", "e", "d", "p", "q"}, trong đó:
       - Khoá công khai: KU = {e, N}
       - Khoá riêng    : KR = {d, p, q}
 
-    Về khoá mã hoá e: bài giảng yêu cầu 1 < e < Phi(N) và gcd(e, Phi(N)) = 1.
-    Nhóm chọn mặc định e = 65537 (= 2^16 + 1) vì đây là số nguyên tố, có ít
+    Khoá mã hoá e phải thoả 1 < e < Phi(N) và gcd(e, Phi(N)) = 1.
+    Giá trị mặc định e = 65537 (= 2^16 + 1) vì đây là số nguyên tố, có ít
     bit 1 nên phép mã hoá nhanh, và là giá trị được dùng phổ biến trong thực tế.
     """
     while True:
@@ -105,7 +104,7 @@ def khoa_tu_p_q(p, q, e):
 
     Ví dụ:
       khoa_tu_p_q(11, 13, 7) -> N = 143, Phi(N) = 120, d = 103
-      khoa_tu_p_q(17, 11, 7) -> N = 187, Phi(N) = 160, d = 23   (ví dụ trong bài giảng)
+      khoa_tu_p_q(17, 11, 7) -> N = 187, Phi(N) = 160, d = 23
     """
     n = p * q
     phi = (p - 1) * (q - 1)

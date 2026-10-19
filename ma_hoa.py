@@ -1,7 +1,7 @@
 """
 ma_hoa.py -- Mã hoá và giải mã RSA.
 
-Theo bài giảng Chương 3, mục 3.2:
+Công thức:
   - Mã hoá : C = M^e mod N, với 0 <= M < N   (dùng khoá công khai KU = {e, N})
   - Giải mã: M = C^d mod N                   (dùng khoá riêng     KR = {d, p, q})
 
@@ -9,7 +9,7 @@ Vì bản rõ M phải nhỏ hơn N, văn bản dài cần được chia khối:
 sang dãy byte (mã UTF-8, hỗ trợ tiếng Việt có dấu), chia thành các khối nhỏ,
 mỗi khối đổi thành một số nguyên M < N rồi mã hoá riêng.
 
-Lưu ý: chương trình cài đặt RSA ở dạng cơ bản như trong bài giảng, chưa bổ sung
+Lưu ý: chương trình cài đặt RSA ở dạng cơ bản, chưa bổ sung
 kỹ thuật đệm (padding, ví dụ OAEP) mà các hệ thống thực tế sử dụng, vì vậy chỉ
 phục vụ mục đích học tập.
 """
@@ -23,7 +23,7 @@ def ma_hoa_so(m, n, e):
     Mã hoá một số nguyên m (0 <= m < n):  C = M^e mod N
 
     Ví dụ: ma_hoa_so(9, 143, 7)  -> 48
-           ma_hoa_so(88, 187, 7) -> 11   (ví dụ trong bài giảng)
+           ma_hoa_so(88, 187, 7) -> 11
     """
     return luy_thua_modulo(m, e, n)
 
@@ -33,7 +33,7 @@ def giai_ma_so(c, n, d):
     Giải mã một số nguyên c:  M = C^d mod N
 
     Ví dụ: giai_ma_so(48, 143, 103) -> 9
-           giai_ma_so(11, 187, 23)  -> 88   (ví dụ trong bài giảng)
+           giai_ma_so(11, 187, 23)  -> 88
     """
     return luy_thua_modulo(c, d, n)
 
