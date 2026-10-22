@@ -38,3 +38,52 @@ python3 --version
 ---
 
 ## Bước 2 – Lấy thư mục chương trình
+
+1. Nếu nhận được file **`.zip`**: bấm chuột phải → **Extract All… / Giải nén** (Windows) hoặc bấm đúp (macOS). Bạn sẽ có thư mục **`rsa_project`**.
+2. Đặt thư mục ở nơi dễ nhớ, ví dụ `Desktop` hoặc `Documents`.
+3. Mở thư mục ra xem, bên trong phải thấy các file `main.py`, `so_hoc.py`, `sinh_khoa.py`, `ma_hoa.py`... **trực tiếp** (không nằm trong thư mục con). Nếu bên trong chỉ có thêm một thư mục `rsa_project` nữa, hãy mở tiếp vào đó.
+
+Cấu trúc đúng:
+
+```
+rsa_project/
+├── README.md          ← file hướng dẫn này
+├── main.py            ← CHẠY FILE NÀY: menu demo
+├── so_hoc.py          ← số học nền: Euclid mở rộng, nghịch đảo, bình phương và nhân
+├── sinh_khoa.py       ← kiểm tra nguyên tố Miller–Rabin, sinh khoá RSA
+├── ma_hoa.py          ← mã hoá / giải mã (số, dãy byte, văn bản)
+├── test_rsa.py        ← kiểm thử tự động của nhóm (11 ca)
+└── test_bo_sung.py    ← kiểm thử bổ sung các trường hợp biên (17 ca)
+```
+
+> ⚠️ Các file `.py` **phải nằm chung một thư mục** vì chúng gọi lẫn nhau. Đừng tách riêng từng file ra chỗ khác.
+
+---
+
+## Bước 3 – Mở cửa sổ dòng lệnh đúng chỗ
+
+"Cửa sổ dòng lệnh" là cửa sổ để gõ lệnh. Quan trọng nhất: **nó phải đang "đứng" trong thư mục `rsa_project`**.
+
+**Windows 10/11**
+1. Mở thư mục `rsa_project` bằng File Explorer (nhìn thấy các file `main.py`, `so_hoc.py`...).
+2. Bấm chuột phải vào **khoảng trống** → **"Open in Terminal"**. Nếu không thấy mục này: bấm vào **thanh địa chỉ** phía trên, xoá hết chữ, gõ `cmd` rồi nhấn Enter.
+
+**macOS**
+1. Mở **Terminal**, gõ `cd ` (có một dấu cách sau chữ cd).
+2. **Kéo thư mục `rsa_project` từ Finder thả vào cửa sổ Terminal**, rồi nhấn Enter.
+
+**Linux**
+- Bấm chuột phải vào khoảng trống trong thư mục → **Open in Terminal**.
+
+### Kiểm tra bạn đang ở đúng chỗ
+
+- Windows (cmd): gõ `dir`
+- Windows PowerShell / macOS / Linux: gõ `ls`
+
+Phải thấy **`main.py`** trong danh sách. Nếu không thấy → bạn đang ở sai thư mục, hãy làm lại Bước 3.
+
+> 💡 Chỉ gõ (hoặc dán) phần lệnh rồi nhấn **Enter**, **không gõ** dấu `$` hay `>` ở đầu dòng. Dán trong cửa sổ Terminal của Windows: bấm **chuột phải** hoặc `Ctrl + V`.
+
+---
+
+## Bước 4 – Chạy chương trình (menu demo)
