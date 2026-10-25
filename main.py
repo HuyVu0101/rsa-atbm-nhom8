@@ -24,6 +24,14 @@ import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+# Hỗ trợ xem trước hình ảnh đa định dạng (JPG, JPEG, PNG, GIF, BMP, WEBP)
+# Ưu tiên Pillow nếu môi trường có sẵn; nếu không có thì fallback sang PhotoImage chuẩn / Windows GDI
+try:
+    from PIL import Image as PILImage, ImageTk as PILImageTk, ImageOps as PILImageOps
+    CO_PIL = True
+except ImportError:
+    CO_PIL = False
+
 # Import các hàm lõi RSA từ các module trong nhóm (giữ nguyên quy ước không sửa các file này)
 from ma_hoa import (
     _kich_thuoc_khoi,
@@ -122,6 +130,77 @@ def rut_gon(so, dau=22, cuoi=10):
     if len(s) <= dau + cuoi + 8:
         return s
     return f"{s[:dau]}...{s[-cuoi:]}  ({len(s)} chữ số)"
+
+
+def tai_anh_cho_giao_dien(duong_dan, max_w=420, max_h=200):
+    """
+    Tải và co giãn ảnh xem trước, hỗ trợ JPG, JPEG, PNG, GIF, BMP, WEBP.
+    Trả về tuple: (photo_image_obj, thong_tin_chuoi, thong_bao_loi)
+    """
+    if not duong_dan or not os.path.isfile(duong_dan):
+        return None, "", "Chưa có ảnh"
+
+    ext = os.path.splitext(duong_dan)[1].lower()
+    dinh_dang_anh = (".png", ".gif", ".jpg", ".jpeg", ".bmp", ".webp", ".ico")
+    if ext not in dinh_dang_anh:
+        return None, "", "(Tệp không phải định dạng hình ảnh)"
+
+    # Cách 1: Sử dụng Pillow nếu có sẵn trong môi trường (chất lượng cao, mượt mà, hỗ trợ mọi định dạng)
+    if CO_PIL:
+        try:
+            im = PILImage.open(duong_dan)
+            w_goc, h_goc = im.size
+            try:
+                im = PILImageOps.exif_transpose(im)
+            except Exception:
+                pass
+            resample_filter = getattr(PILImage, "Resampling", PILImage).LANCZOS
+            im.thumbnail((max_w, max_h), resample_filter)
+            photo = PILImageTk.PhotoImage(im)
+            info = f"{w_goc}×{h_goc} px ({ext.upper()[1:]})"
+            return photo, info, None
+        except Exception:
+            pass
+
+    # Cách 2: PhotoImage chuẩn của Tkinter (hỗ trợ gốc cho PNG, GIF)
+    if ext in (".png", ".gif"):
+        try:
+            photo = tk.PhotoImage(file=duong_dan)
+            w, h = photo.width(), photo.height()
+            if w > max_w or h > max_h:
+                ti_le = max((w + max_w - 1) // max_w, (h + max_h - 1) // max_h)
+                photo = photo.subsample(ti_le, ti_le)
+            info = f"{w}×{h} px ({ext.upper()[1:]})"
+            return photo, info, None
+        except Exception as ex:
+            return None, "", f"(Không đọc được ảnh: {ex})"
+
+    # Cách 3: Dự phòng trên Windows khi không có Pillow (dùng PowerShell System.Drawing xuất tạm PNG)
+    if ext in (".jpg", ".jpeg", ".bmp") and sys.platform.startswith("win"):
+        try:
+            import subprocess
+            import tempfile
+            tmp_png = os.path.join(tempfile.gettempdir(), f"rsa_pv_{abs(hash(duong_dan))}.png").replace("\\", "/")
+            src = os.path.abspath(duong_dan).replace("\\", "/")
+            ps_cmd = f"Add-Type -AssemblyName System.Drawing; [System.Drawing.Bitmap]::FromFile('{src}').Save('{tmp_png}', [System.Drawing.Imaging.ImageFormat]::Png)"
+            res = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd],
+                                 capture_output=True, timeout=5)
+            if res.returncode == 0 and os.path.isfile(tmp_png):
+                photo = tk.PhotoImage(file=tmp_png)
+                w, h = photo.width(), photo.height()
+                if w > max_w or h > max_h:
+                    ti_le = max((w + max_w - 1) // max_w, (h + max_h - 1) // max_h)
+                    photo = photo.subsample(ti_le, ti_le)
+                try:
+                    os.remove(tmp_png)
+                except Exception:
+                    pass
+                info = f"{w}×{h} px ({ext.upper()[1:]})"
+                return photo, info, None
+        except Exception:
+            pass
+
+    return None, "", f"(Không hỗ trợ xem trước {ext.upper()})"
 
 
 def tinh_euclid_cac_buoc(phi, e):
@@ -1190,7 +1269,7 @@ class TabMaHoaTep(tk.Frame):
         self.badge_hash.pack(fill="x", padx=12, pady=(3, 6))
 
         # 3. So sánh trực quan hình ảnh
-        c3 = ModernCard(self, tieu_de="3. So sánh trực quan hình ảnh (Xem trước PNG / GIF)")
+        c3 = ModernCard(self, tieu_de="3. So sánh trực quan hình ảnh (Xem trước PNG, JPG, JPEG, GIF, BMP, WEBP)")
         c3.pack(fill="both", expand=True)
 
         f_imgs = tk.Frame(c3, bg=CLR_CARD_BG)
@@ -1199,24 +1278,26 @@ class TabMaHoaTep(tk.Frame):
         f_imgs.columnconfigure(1, weight=1)
         f_imgs.rowconfigure(0, weight=1)
 
-        b1 = tk.LabelFrame(f_imgs, text=" [ Ảnh gốc ban đầu ] ", bg=CLR_CARD_BG, font=FONT_BODY_BOLD, fg=CLR_TEXT_MAIN)
-        b1.grid(row=0, column=0, sticky="nsew", padx=4)
-        self.lbl_pv_goc = tk.Label(b1, text="(Chưa có ảnh gốc)", bg=CLR_CARD_BG, fg=CLR_TEXT_MUTED)
+        self.box_goc = tk.LabelFrame(f_imgs, text=" [ Ảnh gốc ban đầu ] ", bg=CLR_CARD_BG, font=FONT_BODY_BOLD, fg=CLR_TEXT_MAIN)
+        self.box_goc.grid(row=0, column=0, sticky="nsew", padx=4)
+        self.lbl_pv_goc = tk.Label(self.box_goc, text="(Chưa có ảnh gốc)", bg=CLR_CARD_BG, fg=CLR_TEXT_MUTED, cursor="hand2")
         self.lbl_pv_goc.pack(fill="both", expand=True)
+        self.lbl_pv_goc.bind("<Double-Button-1>", lambda e: self._mo_tep_he_thong(getattr(self, "_duong_dan_anh_goc", None)))
 
-        b2 = tk.LabelFrame(f_imgs, text=" [ Ảnh sau giải mã ] ", bg=CLR_CARD_BG, font=FONT_BODY_BOLD, fg=CLR_TEXT_MAIN)
-        b2.grid(row=0, column=1, sticky="nsew", padx=4)
-        self.lbl_pv_giai = tk.Label(b2, text="(Chưa có ảnh giải mã)", bg=CLR_CARD_BG, fg=CLR_TEXT_MUTED)
+        self.box_giai = tk.LabelFrame(f_imgs, text=" [ Ảnh sau giải mã ] ", bg=CLR_CARD_BG, font=FONT_BODY_BOLD, fg=CLR_TEXT_MAIN)
+        self.box_giai.grid(row=0, column=1, sticky="nsew", padx=4)
+        self.lbl_pv_giai = tk.Label(self.box_giai, text="(Chưa có ảnh giải mã)", bg=CLR_CARD_BG, fg=CLR_TEXT_MUTED, cursor="hand2")
         self.lbl_pv_giai.pack(fill="both", expand=True)
+        self.lbl_pv_giai.bind("<Double-Button-1>", lambda e: self._mo_tep_he_thong(getattr(self, "_duong_dan_anh_giai", None)))
 
     def chon_tep(self):
         path = filedialog.askopenfilename(
             title="Chọn tệp để mã hoá hoặc giải mã",
             filetypes=[
                 ("Tất cả tệp", "*.*"),
-                ("Tệp văn bản", "*.txt"),
-                ("Tệp hình ảnh", "*.png;*.gif"),
-                ("Tệp mã hoá RSA", "*.rsa"),
+                ("Tệp hình ảnh (*.png, *.jpg, *.jpeg, *.gif, *.bmp)", "*.png;*.jpg;*.jpeg;*.gif;*.bmp;*.webp"),
+                ("Tệp văn bản (*.txt)", "*.txt"),
+                ("Tệp mã hoá RSA (*.rsa)", "*.rsa"),
             ]
         )
         if not path:
@@ -1233,6 +1314,7 @@ class TabMaHoaTep(tk.Frame):
         self.lbl_h_giai.config(text="-")
         self.badge_hash.set_status("Đã chọn tệp mới, sẵn sàng thao tác.", "info")
         self._hien_thi_anh_goc(path)
+        self._hien_thi_anh_giai(None)
 
         if size > GIOI_HAN_TEP and not path.endswith(".rsa"):
             ok = messagebox.askyesno("Cảnh báo tệp lớn", f"Tệp {size//1024} KB (>200 KB) giải mã sẽ lâu. Bạn muốn tiếp tục?")
@@ -1244,34 +1326,51 @@ class TabMaHoaTep(tk.Frame):
         self.set_status(f"Đã chọn tệp: {name}")
 
     def _hien_thi_anh_goc(self, path):
-        if path.lower().endswith((".png", ".gif")):
-            try:
-                img = tk.PhotoImage(file=path)
-                w, h = img.width(), img.height()
-                if w > 240 or h > 180:
-                    ti_le = max((w + 239) // 240, (h + 179) // 180)
-                    img = img.subsample(ti_le, ti_le)
-                self.img_goc_tk = img
-                self.lbl_pv_goc.config(image=self.img_goc_tk, text="")
-            except Exception:
-                self.lbl_pv_goc.config(image="", text="(Không đọc được ảnh)")
+        # Nếu path là .rsa, tìm xem file gốc cùng tên có nằm trong thư mục không
+        if path and path.endswith(".rsa"):
+            tien_to = path[:-4]
+            if os.path.isfile(tien_to):
+                path = tien_to
+
+        self._duong_dan_anh_goc = path
+        photo, info, err = tai_anh_cho_giao_dien(path, max_w=420, max_h=195)
+        if photo:
+            self.img_goc_tk = photo
+            self.lbl_pv_goc.config(image=self.img_goc_tk, text="")
+            self.box_goc.config(text=f" [ Ảnh gốc ban đầu - {info} ] ")
         else:
-            self.lbl_pv_goc.config(image="", text="(Không hỗ trợ xem trước)")
+            self.img_goc_tk = None
+            msg = err if err else "(Chưa có ảnh gốc)"
+            self.lbl_pv_goc.config(image="", text=msg)
+            self.box_goc.config(text=" [ Ảnh gốc ban đầu ] ")
 
     def _hien_thi_anh_giai(self, path):
-        if path.lower().endswith((".png", ".gif")):
-            try:
-                img = tk.PhotoImage(file=path)
-                w, h = img.width(), img.height()
-                if w > 240 or h > 180:
-                    ti_le = max((w + 239) // 240, (h + 179) // 180)
-                    img = img.subsample(ti_le, ti_le)
-                self.img_giai_tk = img
-                self.lbl_pv_giai.config(image=self.img_giai_tk, text="")
-            except Exception:
-                self.lbl_pv_giai.config(image="", text="(Không đọc được ảnh)")
+        self._duong_dan_anh_giai = path
+        photo, info, err = tai_anh_cho_giao_dien(path, max_w=420, max_h=195)
+        if photo:
+            self.img_giai_tk = photo
+            self.lbl_pv_giai.config(image=self.img_giai_tk, text="")
+            self.box_giai.config(text=f" [ Ảnh sau giải mã - {info} ] ")
         else:
-            self.lbl_pv_giai.config(image="", text="(Không hỗ trợ xem trước)")
+            self.img_giai_tk = None
+            msg = err if err else "(Chưa có ảnh giải mã)"
+            self.lbl_pv_giai.config(image="", text=msg)
+            self.box_giai.config(text=" [ Ảnh sau giải mã ] ")
+
+    def _mo_tep_he_thong(self, path):
+        """Mở ảnh bằng phần mềm xem ảnh mặc định của hệ điều hành."""
+        if path and os.path.isfile(path):
+            try:
+                if sys.platform.startswith("win"):
+                    os.startfile(path)
+                elif sys.platform == "darwin":
+                    import subprocess
+                    subprocess.Popen(["open", path])
+                else:
+                    import subprocess
+                    subprocess.Popen(["xdg-open", path])
+            except Exception:
+                pass
 
     def bat_dau_ma_hoa(self):
         if not self.duong_dan_tep or not os.path.isfile(self.duong_dan_tep):
@@ -1478,6 +1577,8 @@ class TabMaHoaTep(tk.Frame):
                     else:
                         self.badge_hash.set_status(f"✓ Đã giải mã thành công ra {os.path.basename(out)}.", "info")
 
+                    if self.duong_dan_tep:
+                        self._hien_thi_anh_goc(self.duong_dan_tep)
                     self._hien_thi_anh_giai(out)
                     self.set_status(f"✓ Đã giải mã tệp thành công: {os.path.basename(out)} ({t:.2f}s).")
 
