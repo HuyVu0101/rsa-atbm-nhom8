@@ -77,6 +77,24 @@ class TestMaHoa(unittest.TestCase):
         ban_ma, do_dai = ma_hoa_van_ban(van_ban, k["n"], k["e"])
         self.assertEqual(giai_ma_van_ban(ban_ma, do_dai, k["n"], k["d"]), van_ban)
 
+    def test_chuoi_rong(self):
+        k = sinh_khoa(512)
+        van_ban = ""
+        ban_ma, do_dai = ma_hoa_van_ban(van_ban, k["n"], k["e"])
+        self.assertEqual(giai_ma_van_ban(ban_ma, do_dai, k["n"], k["d"]), van_ban)
+
+    def test_ky_tu_dac_biet_va_emoji(self):
+        k = sinh_khoa(512)
+        van_ban = "Test @#$*^% 🚀 Tiếng Việt: Ă Â Đ Ê Ô Ơ Ư - 123456789"
+        ban_ma, do_dai = ma_hoa_van_ban(van_ban, k["n"], k["e"])
+        self.assertEqual(giai_ma_van_ban(ban_ma, do_dai, k["n"], k["d"]), van_ban)
+
+    def test_van_ban_sieu_dai(self):
+        k = sinh_khoa(512)
+        van_ban = "Học phần An toàn và bảo mật thông tin mạng - NEU. " * 20
+        ban_ma, do_dai = ma_hoa_van_ban(van_ban, k["n"], k["e"])
+        self.assertEqual(giai_ma_van_ban(ban_ma, do_dai, k["n"], k["d"]), van_ban)
+
 
 if __name__ == "__main__":
     unittest.main()
