@@ -4,13 +4,12 @@
 2. [Bước 1 – Cài Python](#bước-1--cài-python)
 3. [Bước 2 – Lấy thư mục chương trình](#bước-2--lấy-thư-mục-chương-trình)
 4. [Bước 3 – Mở cửa sổ dòng lệnh đúng chỗ](#bước-3--mở-cửa-sổ-dòng-lệnh-đúng-chỗ)
-5. [Bước 4A – Chạy giao diện đồ hoạ](#bước-4a--chạy-giao-diện-đồ-hoạ)
-6. [Bước 4B – Chạy giao diện dòng lệnh](#bước-4b--chạy-giao-diện-dòng-lệnh)
-7. [Bước 5 – Chạy kiểm thử tự động](#bước-5--chạy-kiểm-thử-tự-động)
-8. [Giải thích thuật ngữ](#giải-thích-thuật-ngữ)
-9. [Gặp lỗi? Xem ở đây](#gặp-lỗi-xem-ở-đây)
-10. [Giới hạn đã biết của chương trình](#giới-hạn-đã-biết-của-chương-trình)
-11. [Tài liệu tham khảo](#tài-liệu-tham-khảo)
+5. [Bước 4 – Chạy giao diện đồ hoạ](#bước-4--chạy-giao-diện-đồ-hoạ)
+6. [Bước 5 – Chạy kiểm thử tự động](#bước-5--chạy-kiểm-thử-tự-động)
+7. [Giải thích thuật ngữ](#giải-thích-thuật-ngữ)
+8. [Gặp lỗi? Xem ở đây](#gặp-lỗi-xem-ở-đây)
+9. [Giới hạn đã biết của chương trình](#giới-hạn-đã-biết-của-chương-trình)
+10. [Tài liệu tham khảo](#tài-liệu-tham-khảo)
 
 ---
 
@@ -118,7 +117,7 @@ Phải thấy **`main.py`** trong danh sách. Nếu không thấy → bạn đan
 
 ---
 
-## Bước 4A – Chạy giao diện đồ hoạ
+## Bước 4 – Chạy giao diện đồ hoạ
 
 ```
 python main.py
@@ -185,129 +184,7 @@ Nếu nhập sai (p không nguyên tố, p = q, e không hợp lệ, M ≥ n...)
 
 ---
 
-## Bước 4B – Chạy giao diện dòng lệnh
 
-```
-python main_cli.py
-```
-
-Menu hiện ra:
-
-```
-================================================================
-                    DEMO HỆ MÃ RSA
-================================================================
-  1. Tạo khoá ví dụ nhỏ (in từng bước)
-  2. Mã hoá/giải mã với khoá nhỏ (in từng bước)
-  3. Tạo khoá lớn và đo thời gian
-  4. Mã hoá/giải mã văn bản (khoá lớn)
-  5. Mã hoá/giải mã tệp
-  6. Bảng đo thời gian 512/1024/2048 bit (cho báo cáo)
-  0. Thoát
-Chọn:
-```
-
-**Cách dùng:** gõ số của mục rồi nhấn **Enter**. Sau mỗi mục, chương trình chờ bạn nhấn **Enter** để quay lại menu. Gõ `0` để thoát. Luồng gợi ý: **1 → 2 → 3 → 4 → 5 → 6**.
-
-### Mục 1 – Tạo khoá ví dụ nhỏ
-
-Ở dòng `p q e =` nhấn **Enter** để dùng bộ chuẩn p = 11, q = 13, e = 7 (hoặc gõ 3 số cách nhau bởi dấu cách, ví dụ `17 11 7`). Chương trình in từng bước và **bảng Euclid mở rộng**:
-
-```
-Bước 1: chọn hai số nguyên tố  p = 11,  q = 13
-Bước 2: n = p*q = 143
-Bước 3: phi(n) = (p-1)*(q-1) = 10*12 = 120
-Bước 4: chọn e = 7, kiểm tra gcd(e, phi) = 1
-        gcd hợp lệ.
-Bước 5: tính khoá riêng d (nghịch đảo của e theo modulo phi)
-
-Tìm d bằng Euclid mở rộng: giải  120*x + 7*y = 1
-     q |        r |        x |        y
-----------------------------------------
-       |      120 |        1 |        0
-       |        7 |        0 |        1
-    17 |        1 |        1 |      -17
-     7 |        0 |       -7 |      120
-=> gcd = 1;  120*(1) + 7*(-17) = 1
-=> d = y mod phi = -17 mod 120 = 103
-
-Kiểm tra: e*d mod phi = 7*103 mod 120 = 1  (phải bằng 1)
-
->>> Khoá công khai KU = {e=7, n=143}
->>> Khoá riêng    KR = {d=103, p=11, q=13}
-```
-
-### Mục 2 – Mã hoá/giải mã với khoá nhỏ
-
-Nhập một **số M nhỏ hơn n** (nhấn Enter để dùng `9`) hoặc **một từ viết hoa không dấu** (A = 1, …, Z = 26), ví dụ `HELLO`. Với M = 9 chương trình in bảng bình phương và nhân và kết quả:
-
-```
->>> Bản rõ 9  ->  bản mã 48  ->  giải mã lại 9 (ĐÚNG)
-```
-
-Với `HELLO`:
-
-```
->>> Bản mã: [57, 47, 12, 12, 115]
->>> Giải mã lại: HELLO
-```
-
-(Nếu chưa làm mục 1, chương trình tự dùng khoá p = 11, q = 13, e = 7.)
-
-### Mục 3 – Tạo khoá lớn
-
-Nhập độ dài khoá (Enter = 1024; gợi ý 512/1024/2048; tối thiểu 64). Chương trình in thời gian sinh khoá, các số p, q, n, d dạng rút gọn và dòng `Kiểm tra e*d mod phi(n) = 1`. Ví dụ (số sẽ **khác mỗi lần chạy**):
-
-```
-Thời gian sinh khoá: 0.015 giây
-p (256 bit) = 105180600010710833053214...24082849  (78 chữ số)
-...
-n (512 bit) = 824273217589453399605582...54499491  (154 chữ số)
-e = 65537
-```
-
-### Mục 4 – Mã hoá/giải mã văn bản
-
-Dùng khoá lớn vừa tạo (nếu chưa có, tự sinh khoá 1024 bit). Nhập câu bất kỳ, hoặc nhấn Enter để dùng câu mẫu. Ví dụ kết quả:
-
-```
-Văn bản: 56 ký tự = 73 byte (UTF-8)
-Kích thước khối: 63 byte  (đảm bảo mỗi khối < n)
-Số khối bản mã: 2
-Bản giải mã: Thương mại điện tử an toàn nhờ mật mã khoá công khai RSA
-Khớp với bản gốc: ĐÚNG
-```
-
-### Mục 5 – Mã hoá/giải mã tệp
-
-Nhập **đường dẫn tệp**. Cách dễ nhất: **chép tệp cần thử vào thư mục `rsa_project`** rồi gõ đúng tên tệp (ví dụ `anh.png`). Chương trình tạo:
-
-- `anh.png.rsa` – tệp đã mã hoá (dòng đầu là độ dài tệp gốc, các dòng sau là các khối viết hệ 16);
-- `anh_giaima.png` – tệp sau khi giải mã;
-
-rồi so sánh SHA-256 và in `Tệp giải mã trùng tệp gốc: ĐÚNG`. Tệp lớn hơn 200 KB sẽ hỏi lại `Tiếp tục? (c/k)` (gõ `c` để tiếp tục).
-
-Số đo tham khảo với khoá 1024 bit: tệp 20 KB giải mã mất khoảng 0,8 giây, tệp 100 KB khoảng 4 giây; tệp `.rsa` lớn gấp khoảng 2 lần tệp gốc.
-
-### Mục 6 – Bảng đo thời gian
-
-Nhập số lần đo mỗi độ dài khoá (Enter = 3). Chương trình in bảng thời gian trung bình ở 512/1024/2048 bit và **ghi file `thoi_gian_rsa.csv`** vào thư mục hiện tại (mở bằng Excel):
-
-```
-Khoá (bit) |  Sinh khoá (s) |  Mã hoá (ms) |  Giải mã (ms)
-----------------------------------------------------------
-       512 |          0.041 |         0.40 |         15.94
-      1024 |          0.519 |         0.47 |         36.83
-      2048 |          1.572 |         0.75 |        139.38
-```
-
-(Số của máy bạn sẽ khác; thời gian sinh khoá dao động mạnh giữa các lần.)
-
-### Nhập sai thì sao?
-
-Chương trình **không bị dừng**: nó báo lỗi rồi quay lại menu. Ví dụ `p và q phải là số nguyên tố.`, `M phải nhỏ hơn n = 143.`, `Vui lòng nhập một số nguyên.`, `Không tìm thấy tệp.`, `Lựa chọn không hợp lệ.`
-
----
 
 ## Bước 5 – Chạy kiểm thử tự động
 
