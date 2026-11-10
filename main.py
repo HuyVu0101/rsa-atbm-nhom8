@@ -1,19 +1,3 @@
-"""
-main.py -- Giao diện đồ hoạ Hiện đại (Modern Dashboard UI) Demo Hệ mã RSA.
-Học phần: An toàn và bảo mật thông tin mạng
-Tên nhóm: Cấu hình tại hằng số NHOM bên dưới.
-
-Phong cách thiết kế:
-- Giao diện Dashboard hiện đại (Sidebar Navigation + Card-based Layout)
-- 100% Thư viện chuẩn Python (tkinter, ttk, threading, queue, time, os, csv, hashlib, sys)
-- Phông chữ Segoe UI / Consolas phân cấp rõ ràng, dễ nhìn khi chiếu màn hình lớn
-- Tuyệt đối không can thiệp hay sửa đổi các file thuật toán:
-  so_hoc.py, sinh_khoa.py, ma_hoa.py, test_rsa.py.
-
-Chạy chương trình:
-    python main.py
-"""
-
 import csv
 import hashlib
 import os
