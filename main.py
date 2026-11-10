@@ -8,7 +8,7 @@ Phong cách thiết kế:
 - 100% Thư viện chuẩn Python (tkinter, ttk, threading, queue, time, os, csv, hashlib, sys)
 - Phông chữ Segoe UI / Consolas phân cấp rõ ràng, dễ nhìn khi chiếu màn hình lớn
 - Tuyệt đối không can thiệp hay sửa đổi các file thuật toán:
-  so_hoc.py, sinh_khoa.py, ma_hoa.py, test_rsa.py, main_cli.py.
+  so_hoc.py, sinh_khoa.py, ma_hoa.py, test_rsa.py.
 
 Chạy chương trình:
     python main.py
@@ -216,17 +216,12 @@ def tinh_euclid_cac_buoc(phi, e):
 
     while r1 != 0:
         q = r0 // r1
-        r_moi = r0 - q * r1
-        x_moi = x0 - q * x1
-        y_moi = y0 - q * y1
-
-        r0, r1 = r1, r_moi
-        x0, x1 = x1, x_moi
-        y0, y1 = y1, y_moi
-
-        buoc += 1
-        he_thuc = f"{r0} = {phi}*({x0}) + {e}*({y0})"
-        cac_buoc.append((buoc, q, r0, x0, y0, he_thuc))
+        r0, r1 = r1, r0 - q * r1
+        x0, x1 = x1, x0 - q * x1
+        y0, y1 = y1, y0 - q * y1
+        if r1 != 0:
+            buoc += 1
+            cac_buoc.append((buoc, q, r1, x1, y1, f"{r1} = {phi}*({x1}) + {e}*({y1})"))
 
     gcd = r0
     d = y0 % phi
@@ -425,6 +420,9 @@ class TabKhoaNho(tk.Frame):
         self.sq_steps = []
         self.sq_idx = 0
         self.sq_kq = None
+        self.sq_gm_steps = []
+        self.sq_gm_idx = 0
+        self.sq_gm_kq = None
 
         self._tao_giao_dien()
 
@@ -545,51 +543,107 @@ class TabKhoaNho(tk.Frame):
         self.badge_mh = StatusBadge(f_in_m, "Chưa có dữ liệu tính toán.", "info")
         self.badge_mh.pack(side="left", fill="x", expand=True, padx=(8, 0))
 
-        # Điều khiển trình chiếu Bình phương & nhân
-        f_ctrl_sq = tk.Frame(c2, bg=CLR_CARD_BG)
-        f_ctrl_sq.pack(fill="x", padx=10, pady=2)
+        # Khung chứa 2 bảng: Bảng 1 Mã hoá (C = M^e mod n) & Bảng 2 Giải mã (M = C^d mod n)
+        f_tables = tk.Frame(c2, bg=CLR_CARD_BG)
+        f_tables.pack(fill="both", expand=True, padx=8, pady=(2, 6))
+        f_tables.columnconfigure(0, weight=1)
+        f_tables.columnconfigure(1, weight=1)
+        f_tables.rowconfigure(0, weight=1)
 
-        self.lbl_sq_title = tk.Label(f_ctrl_sq, text="Bảng Bình phương và nhân:",
+        # Cột 1: Mã hoá
+        f_col_mh = tk.Frame(f_tables, bg=CLR_CARD_BG)
+        f_col_mh.grid(row=0, column=0, sticky="nsew", padx=(0, 4))
+
+        f_ctrl_sq = tk.Frame(f_col_mh, bg=CLR_CARD_BG)
+        f_ctrl_sq.pack(fill="x", pady=1)
+
+        self.lbl_sq_title = tk.Label(f_ctrl_sq, text="1. Mã hoá C = M^e mod n:",
                                      font=FONT_BODY_BOLD, bg=CLR_CARD_BG)
         self.lbl_sq_title.pack(side="left")
 
         self.btn_sq_next = ModernButton(f_ctrl_sq, "⏭ Bước tiếp", command=self.sq_buoc_tiep,
-                                        bg_color="#0284C7", hover_color="#0369A1", padx=8, pady=2)
-        self.btn_sq_next.pack(side="right", padx=2)
+                                        bg_color="#0284C7", hover_color="#0369A1", padx=6, pady=2)
+        self.btn_sq_next.pack(side="right", padx=1)
         self.btn_sq_next.config_state("disabled")
 
         self.btn_sq_all = ModernButton(f_ctrl_sq, "⏩ Hiện hết", command=self.sq_hien_tat_ca,
-                                       bg_color="#475569", hover_color="#334155", padx=8, pady=2)
-        self.btn_sq_all.pack(side="right", padx=2)
+                                       bg_color="#475569", hover_color="#334155", padx=6, pady=2)
+        self.btn_sq_all.pack(side="right", padx=1)
         self.btn_sq_all.config_state("disabled")
 
         self.btn_sq_reset = ModernButton(f_ctrl_sq, "🔄 Làm lại", command=self.sq_lam_lai,
-                                         bg_color="#E2E8F0", hover_color="#CBD5E1", fg_color=CLR_TEXT_MAIN, padx=8, pady=2)
-        self.btn_sq_reset.pack(side="right", padx=2)
+                                         bg_color="#E2E8F0", hover_color="#CBD5E1", fg_color=CLR_TEXT_MAIN, padx=6, pady=2)
+        self.btn_sq_reset.pack(side="right", padx=1)
         self.btn_sq_reset.config_state("disabled")
 
-        # Treeview Square and Multiply (hiện đủ ít nhất 8 dòng)
-        f_tv_sq = tk.Frame(c2, bg=CLR_CARD_BG)
-        f_tv_sq.pack(fill="both", expand=True, padx=10, pady=(2, 6))
+        f_tv_sq = tk.Frame(f_col_mh, bg=CLR_CARD_BG)
+        f_tv_sq.pack(fill="both", expand=True, pady=(2, 2))
 
         cols_sq = ("buoc", "bit", "bp", "nhan", "kq")
         self.tree_sq = ttk.Treeview(f_tv_sq, columns=cols_sq, show="headings", height=8)
         self.tree_sq.heading("buoc", text="Bước")
-        self.tree_sq.heading("bit", text="Bit số mũ")
+        self.tree_sq.heading("bit", text="Bit")
         self.tree_sq.heading("bp", text="Bình phương (x² mod n)")
         self.tree_sq.heading("nhan", text="Nhân cơ số (nếu bit=1)")
-        self.tree_sq.heading("kq", text="Kết quả sau bước")
+        self.tree_sq.heading("kq", text="Kết quả")
 
-        self.tree_sq.column("buoc", width=45, anchor="center")
-        self.tree_sq.column("bit", width=75, anchor="center")
-        self.tree_sq.column("bp", width=220, anchor="w")
-        self.tree_sq.column("nhan", width=220, anchor="w")
-        self.tree_sq.column("kq", width=110, anchor="center")
+        self.tree_sq.column("buoc", width=38, anchor="center")
+        self.tree_sq.column("bit", width=42, anchor="center")
+        self.tree_sq.column("bp", width=175, anchor="w")
+        self.tree_sq.column("nhan", width=175, anchor="w")
+        self.tree_sq.column("kq", width=65, anchor="center")
         self.tree_sq.pack(side="left", fill="both", expand=True)
 
         sb_sq = ttk.Scrollbar(f_tv_sq, orient="vertical", command=self.tree_sq.yview)
         sb_sq.pack(side="right", fill="y")
         self.tree_sq.configure(yscrollcommand=sb_sq.set)
+
+        # Cột 2: Giải mã
+        f_col_gm = tk.Frame(f_tables, bg=CLR_CARD_BG)
+        f_col_gm.grid(row=0, column=1, sticky="nsew", padx=(4, 0))
+
+        f_ctrl_gm = tk.Frame(f_col_gm, bg=CLR_CARD_BG)
+        f_ctrl_gm.pack(fill="x", pady=1)
+
+        self.lbl_sq_gm_title = tk.Label(f_ctrl_gm, text="2. Giải mã M = C^d mod n:",
+                                        font=FONT_BODY_BOLD, bg=CLR_CARD_BG)
+        self.lbl_sq_gm_title.pack(side="left")
+
+        self.btn_sq_gm_next = ModernButton(f_ctrl_gm, "⏭ Bước tiếp", command=self.sq_gm_buoc_tiep,
+                                           bg_color="#0284C7", hover_color="#0369A1", padx=6, pady=2)
+        self.btn_sq_gm_next.pack(side="right", padx=1)
+        self.btn_sq_gm_next.config_state("disabled")
+
+        self.btn_sq_gm_all = ModernButton(f_ctrl_gm, "⏩ Hiện hết", command=self.sq_gm_hien_tat_ca,
+                                          bg_color="#475569", hover_color="#334155", padx=6, pady=2)
+        self.btn_sq_gm_all.pack(side="right", padx=1)
+        self.btn_sq_gm_all.config_state("disabled")
+
+        self.btn_sq_gm_reset = ModernButton(f_ctrl_gm, "🔄 Làm lại", command=self.sq_gm_lam_lai,
+                                            bg_color="#E2E8F0", hover_color="#CBD5E1", fg_color=CLR_TEXT_MAIN, padx=6, pady=2)
+        self.btn_sq_gm_reset.pack(side="right", padx=1)
+        self.btn_sq_gm_reset.config_state("disabled")
+
+        f_tv_gm = tk.Frame(f_col_gm, bg=CLR_CARD_BG)
+        f_tv_gm.pack(fill="both", expand=True, pady=(2, 2))
+
+        self.tree_sq_gm = ttk.Treeview(f_tv_gm, columns=cols_sq, show="headings", height=8)
+        self.tree_sq_gm.heading("buoc", text="Bước")
+        self.tree_sq_gm.heading("bit", text="Bit")
+        self.tree_sq_gm.heading("bp", text="Bình phương (x² mod n)")
+        self.tree_sq_gm.heading("nhan", text="Nhân cơ số (nếu bit=1)")
+        self.tree_sq_gm.heading("kq", text="Kết quả")
+
+        self.tree_sq_gm.column("buoc", width=38, anchor="center")
+        self.tree_sq_gm.column("bit", width=42, anchor="center")
+        self.tree_sq_gm.column("bp", width=175, anchor="w")
+        self.tree_sq_gm.column("nhan", width=175, anchor="w")
+        self.tree_sq_gm.column("kq", width=65, anchor="center")
+        self.tree_sq_gm.pack(side="left", fill="both", expand=True)
+
+        sb_gm = ttk.Scrollbar(f_tv_gm, orient="vertical", command=self.tree_sq_gm.yview)
+        sb_gm.pack(side="right", fill="y")
+        self.tree_sq_gm.configure(yscrollcommand=sb_gm.set)
 
     def _dat_mau(self, p, q, e):
         self.ent_p.delete(0, "end"); self.ent_p.insert(0, str(p))
@@ -624,6 +678,9 @@ class TabKhoaNho(tk.Frame):
 
             n = p * q
             phi = (p - 1) * (q - 1)
+            if not 1 < e < phi:
+                messagebox.showerror("e không hợp lệ", f"Cần 1 < e < phi(n) = {phi}!")
+                return
             if uoc_chung_lon_nhat(e, phi) != 1:
                 messagebox.showerror("gcd ≠ 1", f"e = {e} không nguyên tố cùng nhau với phi(n) = {phi}!")
                 return
@@ -675,8 +732,8 @@ class TabKhoaNho(tk.Frame):
         self.btn_e_next.config_state("normal")
 
     def thuc_hien_ma_hoa_nho(self):
-        if self.trang_thai.khoa_nho is None:
-            self.thuc_hien_tao_khoa()
+        self.trang_thai.khoa_nho = None
+        self.thuc_hien_tao_khoa()
         if self.trang_thai.khoa_nho is None:
             return
 
@@ -704,8 +761,12 @@ class TabKhoaNho(tk.Frame):
             )
 
             self.sq_steps, self.sq_kq = tinh_luy_thua_cac_buoc(m, e, n)
-            self.lbl_sq_title.config(text=f"Bình phương & nhân C = {m}^{e} mod {n}:")
+            self.lbl_sq_title.config(text=f"Mã hoá C = {m}^{e} mod {n}:")
             self.sq_lam_lai()
+
+            self.sq_gm_steps, self.sq_gm_kq = tinh_luy_thua_cac_buoc(c, d, n)
+            self.lbl_sq_gm_title.config(text=f"Giải mã M = {c}^{d} mod {n}:")
+            self.sq_gm_lam_lai()
 
         elif raw.isalpha() and raw.isascii():
             raw_upper = raw.upper()
@@ -730,8 +791,12 @@ class TabKhoaNho(tk.Frame):
             )
 
             self.sq_steps, self.sq_kq = tinh_luy_thua_cac_buoc(gia_tri[0], e, n)
-            self.lbl_sq_title.config(text=f"Bình phương & nhân '{raw_upper[0]}' (M={gia_tri[0]}):")
+            self.lbl_sq_title.config(text=f"Mã hoá '{raw_upper[0]}' (M={gia_tri[0]}):")
             self.sq_lam_lai()
+
+            self.sq_gm_steps, self.sq_gm_kq = tinh_luy_thua_cac_buoc(ban_ma[0], d, n)
+            self.lbl_sq_gm_title.config(text=f"Giải mã '{raw_upper[0]}' (C={ban_ma[0]}):")
+            self.sq_gm_lam_lai()
         else:
             messagebox.showerror("Dữ liệu không hợp lệ", "Nhập số nguyên không âm hoặc chữ A-Z không dấu!")
 
@@ -753,6 +818,25 @@ class TabKhoaNho(tk.Frame):
         self.btn_sq_next.config_state("normal")
         self.btn_sq_all.config_state("normal")
         self.btn_sq_reset.config_state("normal")
+
+    def sq_gm_buoc_tiep(self):
+        if self.sq_gm_idx < len(self.sq_gm_steps):
+            self.tree_sq_gm.insert("", "end", values=self.sq_gm_steps[self.sq_gm_idx])
+            self.sq_gm_idx += 1
+            if self.sq_gm_idx == len(self.sq_gm_steps):
+                self.btn_sq_gm_next.config_state("disabled")
+
+    def sq_gm_hien_tat_ca(self):
+        while self.sq_gm_idx < len(self.sq_gm_steps):
+            self.sq_gm_buoc_tiep()
+
+    def sq_gm_lam_lai(self):
+        for item in self.tree_sq_gm.get_children():
+            self.tree_sq_gm.delete(item)
+        self.sq_gm_idx = 0
+        self.btn_sq_gm_next.config_state("normal")
+        self.btn_sq_gm_all.config_state("normal")
+        self.btn_sq_gm_reset.config_state("normal")
 
 
 # ==============================================================================
@@ -1198,7 +1282,7 @@ class TabMaHoaVanBan(tk.Frame):
 
 
 # ==============================================================================
-# TAB 4: MÃ HOÁ TỆP & ẢNH (KHÓA LƯU CÙNG TỆP, KHÔNG HỘP THOẠI THÀNH CÔNG, SINH NỀN)
+# TAB 4: MÃ HOÁ TỆP & ẢNH (KHÓA LƯU TRONG BỘ NHỚ KHI ĐANG MỞ, KHÔNG HỘP THOẠI THÀNH CÔNG, SINH NỀN)
 # ==============================================================================
 class TabMaHoaTep(tk.Frame):
     def __init__(self, parent, trang_thai, status_cb):
@@ -1208,7 +1292,7 @@ class TabMaHoaTep(tk.Frame):
 
         self.duong_dan_tep = None
         self.duong_dan_rsa = None
-        self.khoa_da_ma_hoa_tep = None  # Lưu khoá lúc mã hoá tệp
+        self.khoa_da_ma_hoa_tep = None  # Lưu khoá trong bộ nhớ khi đang mở (tệp .rsa không chứa khoá)
 
         self.img_goc_tk = None
         self.img_giai_tk = None
@@ -1303,6 +1387,8 @@ class TabMaHoaTep(tk.Frame):
         if not path:
             return
         self.duong_dan_tep = path
+        self.duong_dan_rsa = None
+        self.khoa_da_ma_hoa_tep = None
         size = os.path.getsize(path)
         name = os.path.basename(path)
 
@@ -1515,6 +1601,8 @@ class TabMaHoaTep(tk.Frame):
                     h_orig = hashlib.sha256(fg.read()).hexdigest()
 
             self.msg_queue.put(("DONE_GM", out_path, h_giai, t_gm, h_orig))
+        except (OverflowError, ValueError):
+            self.msg_queue.put(("ERR_GM", "Sai khoá: tệp này được mã hoá bằng một cặp khoá khác (hoặc khoá đã mất khi tắt chương trình)."))
         except Exception as ex:
             self.msg_queue.put(("ERR_GM", str(ex)))
 
@@ -1582,11 +1670,23 @@ class TabMaHoaTep(tk.Frame):
                     self._hien_thi_anh_giai(out)
                     self.set_status(f"✓ Đã giải mã tệp thành công: {os.path.basename(out)} ({t:.2f}s).")
 
-                elif loai in ("ERR_MH", "ERR_GM"):
+                elif loai == "ERR_MH":
                     self.progress["value"] = 0
                     self.btn_mh.config_state("normal")
                     self.btn_gm.config_state("normal")
-                    messagebox.showerror("Lỗi", msg[1])
+                    self.lbl_tien_do.config(text="✗ Mã hoá thất bại")
+                    self.set_status(f"✗ {msg[1]}")
+                    messagebox.showerror("Lỗi mã hoá", msg[1])
+
+                elif loai == "ERR_GM":
+                    self.progress["value"] = 0
+                    self.btn_mh.config_state("normal")
+                    self.btn_gm.config_state("normal")
+                    self.badge_hash.set_status(f"✗ {msg[1]}", "danger")
+                    self.lbl_h_giai.config(text="-")
+                    self.lbl_tien_do.config(text="✗ Giải mã thất bại")
+                    self.set_status(f"✗ {msg[1]}")
+                    messagebox.showerror("Lỗi giải mã", msg[1])
         except queue.Empty:
             pass
 
@@ -1639,7 +1739,7 @@ class TabDoThoiGian(tk.Frame):
 
         tk.Label(f_ctrl, text="Số lần lặp mỗi độ dài khoá:", font=FONT_BODY_BOLD, bg=CLR_CARD_BG).pack(side="left", padx=(0, 6))
         self.spn_so_lan_khoa = ttk.Spinbox(f_ctrl, from_=1, to=10, width=4, font=FONT_CODE)
-        self.spn_so_lan_khoa.set("3")
+        self.spn_so_lan_khoa.set("5")
         self.spn_so_lan_khoa.pack(side="left", padx=(0, 10))
         self.spn_so_lan_khoa.bind("<Return>", lambda e: self.bat_dau_do_khoa())
 
@@ -1880,7 +1980,7 @@ class TabDoThoiGian(tk.Frame):
 
         tk.Label(f_ctrl, text="Số lần lặp mỗi mức:", font=FONT_BODY_BOLD, bg=CLR_CARD_BG).pack(side="left", padx=(0, 4))
         self.spn_so_lan_kt = ttk.Spinbox(f_ctrl, from_=1, to=10, width=4, font=FONT_CODE)
-        self.spn_so_lan_kt.set("3")
+        self.spn_so_lan_kt.set("5")
         self.spn_so_lan_kt.pack(side="left", padx=(0, 10))
         self.spn_so_lan_kt.bind("<Return>", lambda e: self.bat_dau_do_kich_thuoc())
 
@@ -2415,7 +2515,7 @@ class UngDungRSA(tk.Tk):
 
     def _dang_ky_phim_tat(self):
         self.bind("<F11>", lambda e: self.toggle_fullscreen())
-        self.bind("<Escape>", lambda e: self.attributes("-fullscreen", False) if self.is_fullscreen else None)
+        self.bind("<Escape>", lambda e: self.toggle_fullscreen() if self.is_fullscreen else None)
 
         for i in range(1, 6):
             self.bind(f"<Control-Key-{i}>", lambda e, idx=i-1: self.chuyen_tab(idx))
