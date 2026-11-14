@@ -215,27 +215,43 @@ def tinh_euclid_cac_buoc(phi, e):
 
 
 def tinh_luy_thua_cac_buoc(co_so, so_mu, modulo):
-    """Sinh danh sách các bước của thuật toán Bình phương và nhân."""
-    bits = bin(so_mu)[2:]
+    """
+    Sinh danh sách các bước của thuật toán Bình phương và nhân.
+
+    Duyệt bit của số mũ TỪ PHẢI SANG TRÁI, đúng như hàm luy_thua_modulo
+    trong so_hoc.py và Bảng 2.4 / ví dụ tính tay mục 2.6 của báo cáo:
+      - Nếu bit cuối của số mũ là 1: ket_qua = ket_qua * co_so mod n
+      - Bỏ bit cuối (so_mu = so_mu // 2), rồi co_so = co_so^2 mod n
+
+    Mỗi dòng gồm: (vòng, "số mũ (bit cuối)", cơ số đầu vòng, phép nhân, kết quả cuối vòng).
+    """
+    goc, so_mu_goc = co_so, so_mu
+    ket_qua = 1 % modulo
+    co_so = co_so % modulo
     cac_buoc = []
-    kq = 1
+    vong = 0
 
-    for idx, b in enumerate(bits, 1):
-        truoc = kq
-        kq = (kq * kq) % modulo
-        bp_str = f"{truoc}² mod {modulo} = {kq}"
+    while so_mu > 0:
+        vong += 1
+        bit = so_mu % 2
+        # Cơ số đầu vòng thứ k là goc^(2^(k-1)) mod n
+        mu_hien_thi = str(2 ** (vong - 1)) if vong <= 17 else f"2^{vong - 1}"
+        co_so_str = f"{goc}^{mu_hien_thi} mod {modulo} = {co_so}"
 
-        if b == "1":
-            truoc2 = kq
-            kq = (kq * co_so) % modulo
-            nhan_str = f"{truoc2} * {co_so} mod {modulo} = {kq}"
+        if bit == 1:
+            truoc = ket_qua
+            ket_qua = (ket_qua * co_so) % modulo
+            nhan_str = f"{truoc}·{co_so} mod {modulo} = {ket_qua}"
         else:
-            nhan_str = "-"
+            nhan_str = f"{ket_qua} (giữ nguyên)"
 
-        cac_buoc.append((idx, b, bp_str, nhan_str, kq))
+        cac_buoc.append((vong, f"{so_mu} ({bit})", co_so_str, nhan_str, ket_qua))
 
-    assert kq == luy_thua_modulo(co_so, so_mu, modulo), "Không khớp so_hoc.luy_thua_modulo!"
-    return cac_buoc, kq
+        so_mu //= 2
+        co_so = (co_so * co_so) % modulo
+
+    assert ket_qua == luy_thua_modulo(goc, so_mu_goc, modulo), "Không khớp so_hoc.luy_thua_modulo!"
+    return cac_buoc, ket_qua
 
 
 # ==============================================================================
@@ -565,16 +581,16 @@ class TabKhoaNho(tk.Frame):
 
         cols_sq = ("buoc", "bit", "bp", "nhan", "kq")
         self.tree_sq = ttk.Treeview(f_tv_sq, columns=cols_sq, show="headings", height=8)
-        self.tree_sq.heading("buoc", text="Bước")
-        self.tree_sq.heading("bit", text="Bit")
-        self.tree_sq.heading("bp", text="Bình phương (x² mod n)")
-        self.tree_sq.heading("nhan", text="Nhân cơ số (nếu bit=1)")
+        self.tree_sq.heading("buoc", text="Vòng")
+        self.tree_sq.heading("bit", text="Số mũ (bit cuối)")
+        self.tree_sq.heading("bp", text="Cơ số đầu vòng")
+        self.tree_sq.heading("nhan", text="Kết quả × cơ số (nếu bit = 1)")
         self.tree_sq.heading("kq", text="Kết quả")
 
-        self.tree_sq.column("buoc", width=38, anchor="center")
-        self.tree_sq.column("bit", width=42, anchor="center")
-        self.tree_sq.column("bp", width=175, anchor="w")
-        self.tree_sq.column("nhan", width=175, anchor="w")
+        self.tree_sq.column("buoc", width=42, anchor="center")
+        self.tree_sq.column("bit", width=95, anchor="center")
+        self.tree_sq.column("bp", width=170, anchor="w")
+        self.tree_sq.column("nhan", width=170, anchor="w")
         self.tree_sq.column("kq", width=65, anchor="center")
         self.tree_sq.pack(side="left", fill="both", expand=True)
 
@@ -612,16 +628,16 @@ class TabKhoaNho(tk.Frame):
         f_tv_gm.pack(fill="both", expand=True, pady=(2, 2))
 
         self.tree_sq_gm = ttk.Treeview(f_tv_gm, columns=cols_sq, show="headings", height=8)
-        self.tree_sq_gm.heading("buoc", text="Bước")
-        self.tree_sq_gm.heading("bit", text="Bit")
-        self.tree_sq_gm.heading("bp", text="Bình phương (x² mod n)")
-        self.tree_sq_gm.heading("nhan", text="Nhân cơ số (nếu bit=1)")
+        self.tree_sq_gm.heading("buoc", text="Vòng")
+        self.tree_sq_gm.heading("bit", text="Số mũ (bit cuối)")
+        self.tree_sq_gm.heading("bp", text="Cơ số đầu vòng")
+        self.tree_sq_gm.heading("nhan", text="Kết quả × cơ số (nếu bit = 1)")
         self.tree_sq_gm.heading("kq", text="Kết quả")
 
-        self.tree_sq_gm.column("buoc", width=38, anchor="center")
-        self.tree_sq_gm.column("bit", width=42, anchor="center")
-        self.tree_sq_gm.column("bp", width=175, anchor="w")
-        self.tree_sq_gm.column("nhan", width=175, anchor="w")
+        self.tree_sq_gm.column("buoc", width=42, anchor="center")
+        self.tree_sq_gm.column("bit", width=95, anchor="center")
+        self.tree_sq_gm.column("bp", width=170, anchor="w")
+        self.tree_sq_gm.column("nhan", width=170, anchor="w")
         self.tree_sq_gm.column("kq", width=65, anchor="center")
         self.tree_sq_gm.pack(side="left", fill="both", expand=True)
 
