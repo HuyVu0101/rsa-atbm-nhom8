@@ -325,7 +325,7 @@ Mẹo: hầu hết lỗi của người mới đến từ việc **đứng sai t
 
 ## Giới hạn đã biết của chương trình
 
-Những điều dưới đây được phát hiện khi kiểm thử và đo đạc; chúng cũng được ghi trong báo cáo (mục 4.4):
+Những điều dưới đây được phát hiện khi kiểm thử và đo đạc. Các hạn chế chính cũng được phân tích trong báo cáo (mục 2.7 Phân tích độ an toàn, mục 4.3.2 Độ an toàn và mục 4.3.3 Hạn chế và hướng phát triển):
 
 - **Khoá không được lưu ra tệp**: thoát chương trình là mất khoá, nên tệp `.rsa` đã tạo **không giải mã được** sau đó. (Giao diện chỉ cho "Sao chép" khoá vào bộ nhớ tạm.)
 - **Không có "đệm" OAEP/PSS**: cùng một bản rõ và cùng một khoá luôn cho **cùng một bản mã**, và bản mã có thể bị biến đổi có chủ đích. Phần mềm thực tế bắt buộc có lớp đệm này (theo chuẩn RFC 8017). Tệp `.rsa` cũng không có xác thực toàn vẹn.
@@ -336,7 +336,7 @@ Những điều dưới đây được phát hiện khi kiểm thử và đo đ�
 - **Giải mã không dùng định lý phần dư Trung Hoa (CRT)** nên chậm hơn mức có thể (khoảng 25 KB/giây với khoá 1024 bit).
 - **Bảng Euclid ở mục 1** dừng ở dòng có số dư bằng 1 (gcd), không hiện dòng cuối có số dư 0.
 - **Khoá ngắn không an toàn**: khoá dưới 2048 bit chỉ dùng để minh hoạ; khoá cỡ vài chục bit có thể bị phá trong tích tắc (xem Bước 6).
-- RSA có thể bị thuật toán Shor đe doạ nếu có máy tính lượng tử đủ lớn; NIST đang xây dựng lộ trình chuyển sang mật mã hậu lượng tử (bản dự thảo NIST IR 8547).
+- RSA có thể bị thuật toán Shor phá nếu có máy tính lượng tử đủ lớn. Theo lộ trình chuyển sang mật mã hậu lượng tử của NIST (NIST IR 8547, bản chính thức tháng 10/2026), RSA ở mọi độ dài khoá bị xếp vào diện "không khuyến khích" (deprecated) sau năm 2030 và không còn được phép dùng theo tiêu chuẩn NIST sau năm 2035.
 
 Muốn mã hoá thông tin thật, hãy dùng các công cụ đã được kiểm định như OpenSSL, GnuPG hoặc các thư viện mật mã chuẩn.
 
@@ -347,7 +347,7 @@ Muốn mã hoá thông tin thật, hãy dùng các công cụ đã được ki�
 - R. L. Rivest, A. Shamir, L. Adleman (1978), *A Method for Obtaining Digital Signatures and Public-Key Cryptosystems*: https://doi.org/10.1145/359340.359342
 - RFC 8017, *PKCS #1: RSA Cryptography Specifications Version 2.2*: https://www.rfc-editor.org/rfc/rfc8017
 - NIST FIPS 186-5, *Digital Signature Standard*: https://doi.org/10.6028/NIST.FIPS.186-5
-- NIST IR 8547 (bản dự thảo), *Transition to Post-Quantum Cryptography Standards*: https://csrc.nist.gov/pubs/ir/8547/ipd
+- D. Moody, R. Perlner, A. Regenscheid, A. Robinson, D. Cooper (2026), NIST IR 8547, *Transition to Post-Quantum Cryptography Standards*: https://doi.org/10.6028/NIST.IR.8547
 - Python `tkinter`: https://docs.python.org/3/library/tkinter.html
 - Python `random` (cảnh báo không dùng cho bảo mật): https://docs.python.org/3/library/random.html
 - Tải Python: https://www.python.org/downloads/
